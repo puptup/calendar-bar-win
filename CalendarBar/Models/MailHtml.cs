@@ -51,15 +51,16 @@ public static class MailHtmlDocument
     {
         var imagePolicy = allowImages ? "img-src data: https: http:;" : "";
         var hiddenImages = allowImages ? "" : "img { display: none; }";
-        return $"""
+        // $$ so CSS `{ }` stays literal; interpolations use `{{name}}`.
+        return $$"""
             <!doctype html>
             <html>
             <head>
             <meta charset="utf-8">
-            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; font-src data:; {imagePolicy}">
+            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; font-src data:; {{imagePolicy}}">
             <style>
-                :root {{ color-scheme: light; }}
-                body {{
+                :root { color-scheme: light; }
+                body {
                     margin: 0;
                     padding: 12px;
                     background: #ffffff;
@@ -67,13 +68,13 @@ public static class MailHtmlDocument
                     font-family: "Segoe UI Variable", "Segoe UI", sans-serif;
                     font-size: 13px;
                     overflow-wrap: break-word;
-                }}
-                img {{ max-width: 100%; height: auto; }}
-                table {{ max-width: 100%; }}
-                {hiddenImages}
+                }
+                img { max-width: 100%; height: auto; }
+                table { max-width: 100%; }
+                {{hiddenImages}}
             </style>
             </head>
-            <body>{raw}</body>
+            <body>{{raw}}</body>
             </html>
             """;
     }
