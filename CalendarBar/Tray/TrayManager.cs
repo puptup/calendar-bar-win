@@ -16,6 +16,7 @@ public sealed class TrayManager : IDisposable
     private FlyoutWindow? _mailFlyout;
     private bool _calendarShowingDetail;
     private bool _mailShowingDetail;
+    private string? _balloonMailMessageId;
 
     public void InstallCalendar()
     {
@@ -35,6 +36,7 @@ public sealed class TrayManager : IDisposable
             if (e.Button is MouseButtons.Left or MouseButtons.Right)
                 ToggleCalendar();
         };
+        _calendar.BalloonTipClicked += (_, _) => ShowCalendar();
         UpdateCalendarIcon();
     }
 
@@ -56,7 +58,20 @@ public sealed class TrayManager : IDisposable
             if (e.Button is MouseButtons.Left or MouseButtons.Right)
                 ToggleMail();
         };
+        _mail.BalloonTipClicked += (_, _) =>
+        {
+            if (_balloonMailMessageId is not null)
+                MailSyncService.Shared.FocusMessage(_balloonMailMessageId, MailFolderKind.Inbox);
+            ShowMailPanel();
+        };
         UpdateMailIcon();
+    }
+
+    public void ShowBalloon(string title, string body, string? mailMessageId = null)
+    {
+        _balloonMailMessageId = mailMessageId;
+        var icon = mailMessageId is not null ? _mail ?? _calendar : _calendar ?? _mail;
+        icon?.ShowBalloonTip(8000, title, body.Length > 250 ? body[..250] : body, ToolTipIcon.Info);
     }
 
     public void UninstallMail()
@@ -183,7 +198,7 @@ internal static class TrayIcons
         g.DrawLine(pen, 22, 4, 22, 10);
         using var white = new SolidBrush(Color.White);
         g.FillRectangle(white, 6, 14, 20, 12);
-        using var font = new Font("Segoe UI", 9, FontStyle.Bold, GraphicsUnit.Pixel);
+        using var font = new System.Drawing.Font("Segoe UI", 9f, System.Drawing.FontStyle.Bold, GraphicsUnit.Pixel);
         using var dark = new SolidBrush(accent);
         var day = DateTime.Now.Day.ToString();
         var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
@@ -206,7 +221,7 @@ internal static class TrayIcons
         g.DrawLine(pen, 28, 10, 16, 18);
         if (!loggedIn)
         {
-            using var font = new Font("Segoe UI", 10, FontStyle.Bold, GraphicsUnit.Pixel);
+            using var font = new System.Drawing.Font("Segoe UI", 10f, System.Drawing.FontStyle.Bold, GraphicsUnit.Pixel);
             g.DrawString("+", font, Brushes.White, 20, 2);
         }
         if (unread > 0) DrawBadge(g, unread > 99 ? "99+" : unread.ToString());
@@ -230,7 +245,7 @@ internal static class TrayIcons
     private static void DrawBadge(Graphics g, string text)
     {
         using var red = new SolidBrush(Color.FromArgb(196, 43, 28));
-        using var font = new Font("Segoe UI", 8, FontStyle.Bold, GraphicsUnit.Pixel);
+        using var font = new System.Drawing.Font("Segoe UI", 8f, System.Drawing.FontStyle.Bold, GraphicsUnit.Pixel);
         var size = g.MeasureString(text, font);
         var rect = new RectangleF(32 - size.Width - 2, 0, size.Width + 2, size.Height);
         g.FillEllipse(red, rect);

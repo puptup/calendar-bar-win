@@ -1,3 +1,4 @@
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Web.WebView2.Core;
@@ -11,7 +12,6 @@ public sealed class MailBodyHost : UserControl
     private readonly MailFolderKind? _folder;
     private readonly RichTextBox _plain = new() { IsReadOnly = true, BorderThickness = new Thickness(0), Background = System.Windows.Media.Brushes.Transparent };
     private readonly WebView2 _web = new() { Height = 40, Visibility = Visibility.Collapsed };
-    private bool _ready;
 
     public MailBodyHost(MailMessage message, MailFolderKind? folder)
     {
@@ -64,7 +64,6 @@ public sealed class MailBodyHost : UserControl
                 _ = MeasureHtml();
             };
             _web.NavigateToString(wrapped);
-            _ready = true;
         }
         catch
         {

@@ -1,4 +1,3 @@
-using Microsoft.Toolkit.Uwp.Notifications;
 using System.Windows.Threading;
 
 namespace CalendarBar;
@@ -29,7 +28,6 @@ public sealed class NotificationService : ObservableObject
 
     public void Configure()
     {
-        ToastNotificationManagerCompat.OnActivated += args => OnToastActivated(args.Argument);
         _reminderTimer.Tick += (_, _) => DrainDueReminders();
         _reminderTimer.Start();
         RefreshAuthorizationStatus();
@@ -37,7 +35,6 @@ public sealed class NotificationService : ObservableObject
 
     public void RefreshAuthorizationStatus()
     {
-        // Windows toast notifications don't need a runtime permission prompt the way macOS does.
         AuthorizationState = NotificationAuthorizationState.Authorized;
         IsAuthorized = true;
     }
@@ -83,15 +80,10 @@ public sealed class NotificationService : ObservableObject
     public Task DeliverNewMailNotification(MailMessage message)
     {
         if (!IsAuthorized) throw ExchangeException.ActiveSync("Уведомления CalendarBar не разрешены в Windows.");
-        var body = MailNotificationBody(message);
-        new ToastContentBuilder()
-            .AddArgument("kind", "mail")
-            .AddArgument("messageId", message.Id)
-            .AddText(message.DisplaySubject)
-            .AddText(message.From?.DisplayName ?? "Новое письмо")
-            .AddText(body)
-            .SetToastScenario(ToastScenario.Default)
-            .Show();
+        TrayManager.Shared.ShowBalloon(
+            message.DisplaySubject,
+            $"{message.From?.DisplayName ?? "Новое письмо"}\n{MailNotificationBody(message)}",
+            message.Id);
         return Task.CompletedTask;
     }
 
@@ -112,26 +104,7 @@ public sealed class NotificationService : ObservableObject
     {
         var parts = new List<string> { $"Через {minutesBefore} мин · {eventItem.DurationText}" };
         if (!string.IsNullOrEmpty(eventItem.Location)) parts.Add(eventItem.Location);
-        new ToastContentBuilder()
-            .AddArgument("kind", "event")
-            .AddArgument("eventId", eventItem.Id)
-            .AddText(eventItem.Subject)
-            .AddText(string.Join("\n", parts))
-            .SetToastScenario(ToastScenario.Reminder)
-            .Show();
-    }
-
-    private void OnToastActivated(string argument)
-    {
-        var args = ToastArguments.Parse(argument);
-        if (args.TryGetValue("kind", out var kind) && kind == "mail" && args.TryGetValue("messageId", out var messageId))
-        {
-            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
-            {
-                MailSyncService.Shared.FocusMessage(messageId, MailFolderKind.Inbox);
-                TrayManager.Shared.ShowMailPanel();
-            });
-        }
+        TrayManager.Shared.ShowBalloon(eventItem.Subject, string.Join("\n", parts));
     }
 
     private static string ReminderKey(CalendarEvent eventItem, int minutesBefore)
