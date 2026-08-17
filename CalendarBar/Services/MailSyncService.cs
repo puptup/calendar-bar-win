@@ -163,7 +163,7 @@ public sealed class MailSyncService : ObservableObject
         SelectedMessageId = null;
         Messages = _messagesByFolder.GetValueOrDefault(folder) ?? [];
         if (folder == MailFolderKind.Drafts) SettingsStore.Shared.DraftsUnsupported = false;
-        RequestSync(MailSyncScope.Folder(folder), notifyNew: false);
+        RequestSync(MailSyncScope.ForFolder(folder), notifyNew: false);
     }
 
     public void FocusMessage(string id, MailFolderKind folder = MailFolderKind.Inbox)
@@ -366,7 +366,7 @@ public sealed class MailSyncService : ObservableObject
         try { await client.SetMessageRead(message, read); }
         catch
         {
-            await RequestSync(MailSyncScope.Folder(SelectedFolder), false);
+            await RequestSync(MailSyncScope.ForFolder(SelectedFolder), false);
             await client.SetMessageRead(message, read);
         }
         UpdateMessage(message.Id, m => m.IsRead = read);
@@ -386,7 +386,7 @@ public sealed class MailSyncService : ObservableObject
             catch when (!didResync)
             {
                 didResync = true;
-                await RequestSync(MailSyncScope.Folder(SelectedFolder), false);
+                await RequestSync(MailSyncScope.ForFolder(SelectedFolder), false);
                 await client.SetMessagesRead(batch, true);
             }
             foreach (var message in batch)

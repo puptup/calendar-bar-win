@@ -202,21 +202,21 @@ public sealed class MailSyncRequest
 public abstract record MailSyncScope
 {
     public sealed record AllFoldersScope : MailSyncScope;
-    public sealed record FolderScope(MailFolderKind Folder) : MailSyncScope;
+    public sealed record FolderScope(MailFolderKind Kind) : MailSyncScope;
 
     public static MailSyncScope AllFolders { get; } = new AllFoldersScope();
-    public static MailSyncScope Folder(MailFolderKind kind) => new FolderScope(kind);
+    public static MailSyncScope ForFolder(MailFolderKind kind) => new FolderScope(kind);
 
     public MailSyncScope Merged(MailSyncScope other) => (this, other) switch
     {
         (AllFoldersScope, _) or (_, AllFoldersScope) => AllFolders,
-        (FolderScope lhs, FolderScope rhs) => lhs.Folder == rhs.Folder ? lhs : AllFolders,
+        (FolderScope lhs, FolderScope rhs) => lhs.Kind == rhs.Kind ? lhs : AllFolders,
         _ => AllFolders
     };
 
     public List<MailFolderKind> Folders(MailFolderKind preferred)
     {
-        if (this is FolderScope folder) return [folder.Folder];
+        if (this is FolderScope folder) return [folder.Kind];
         var folders = MailFolderKindText.All.Where(f => f != preferred).ToList();
         folders.Insert(0, preferred);
         return folders;

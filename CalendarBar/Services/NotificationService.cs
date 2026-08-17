@@ -29,7 +29,7 @@ public sealed class NotificationService : ObservableObject
 
     public void Configure()
     {
-        ToastNotificationManagerCompat.OnActivated += OnToastActivated;
+        ToastNotificationManagerCompat.OnActivated += args => OnToastActivated(args.Argument);
         _reminderTimer.Tick += (_, _) => DrainDueReminders();
         _reminderTimer.Start();
         RefreshAuthorizationStatus();
@@ -121,9 +121,9 @@ public sealed class NotificationService : ObservableObject
             .Show();
     }
 
-    private void OnToastActivated(ToastNotificationActivatedEventArgsCompat e)
+    private void OnToastActivated(string argument)
     {
-        var args = ToastArguments.Parse(e.Argument);
+        var args = ToastArguments.Parse(argument);
         if (args.TryGetValue("kind", out var kind) && kind == "mail" && args.TryGetValue("messageId", out var messageId))
         {
             System.Windows.Application.Current?.Dispatcher.Invoke(() =>
