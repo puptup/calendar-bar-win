@@ -74,7 +74,12 @@ public sealed class AuthView : UserControl
         root.Children.Add(header);
         root.Children.Add(quitBar);
         root.Children.Add(buttons);
-        root.Children.Add(fields);
+        root.Children.Add(new ScrollViewer
+        {
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            Content = fields
+        });
         Content = root;
     }
 
